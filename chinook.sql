@@ -83,9 +83,55 @@ from
 from Track t join Invoice i join InvoiceLine l
 where i.InvoiceDate like '2013%' and i.InvoiceId = l.InvoiceId and l.TrackId = t.TrackId
 group by t.Name
-order by count(t.Name) desc) z
-where num_of_downloads = (select max(num_of_downloads) from z);
+order by count(t.Name) desc)
+where num_of_downloads = (select max(num_of_downloads) from (select t.Name, count(t.Name) as 'num_of_downloads'
+from Track t join Invoice i join InvoiceLine l
+where i.InvoiceDate like '2013%' and i.InvoiceId = l.InvoiceId and l.TrackId = t.TrackId
+group by t.Name
+order by count(t.Name) desc) );
 
 -- 25. `top_5_tracks.sql`: Provide a query that shows the top 5 most purchased tracks over all.
+
+select t.Name, count(l.TrackId) as 'num_of_downloads'
+from Track t join InvoiceLine l
+where t.TrackId = l.TrackId
+group by t.Name
+order by num_of_downloads desc limit 5;
+
 -- 26. `top_3_artists.sql`: Provide a query that shows the top 3 best selling artists.
+
+select Name, Sales
+from
+(select a.Name, sum(l.Quantity) as 'Sales'
+from Artist a join Album b join Track t join InvoiceLine l
+where a.ArtistId = b.ArtistId and b.AlbumId = t.AlbumId and t.TrackId = l.TrackId
+group by a.Name)
+order by Sales desc limit 3;
+
+
 -- 27. `top_media_type.sql`: Provide a query that shows the most purchased Media Type.
+select Name, max(num_of_sales)
+from
+(select m.Name, count(t.MediaTypeId) as 'num_of_sales'
+from MediaType m join Track t join InvoiceLine l
+where m.MediaTypeId = t.MediaTypeId and t.TrackId = l.TrackId
+group by m.Name);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

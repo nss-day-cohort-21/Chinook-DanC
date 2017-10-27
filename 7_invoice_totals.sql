@@ -1,0 +1,2 @@
+-- 7. `invoice_totals.sql`: Provide a query that shows the Invoice Total, Customer name, Country and Sale Agent name for all invoices and customers.
+select i.InvoiceId , i.Total, c.FirstName 'Customer First', c.LastName 'Customer Last', e.FirstName 'Employee First', e.LastName 'Employee Last' from Invoice i join Customer c, Employee e where i.CustomerId = c.CustomerId and c.SupportRepId = e.EmployeeId;
