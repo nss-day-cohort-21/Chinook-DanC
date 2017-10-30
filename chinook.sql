@@ -1,7 +1,7 @@
 -- For each of the following exercises, provide the appropriate query. Yes, even the ones that are expressed in the form of questions. Everything from class and the [Sqlite Documentation](http://www.sqlite.org/) is fair game.
 
 -- 1. `non_usa_customers.sql`: Provide a query showing Customers (just their full names, customer ID and country) who are not in the US.
-select FirstName, LastName from Customer where Country <> 'USA';
+select FirstName, LastName, Country from Customer where Country <> 'USA';
 -- 2. `brazil_customers.sql`: Provide a query only showing the Customers from Brazil.
 select FirstName, LastName, Country from Customer where Country = 'Brazil';
 -- 3. `brazil_customers_invoices.sql`: Provide a query showing the Invoices of customers who are from Brazil. The resultant table should show the customer's full name, Invoice ID, Date of the invoice and billing country.
@@ -11,7 +11,9 @@ select FirstName, LastName, Title from Employee where Title = 'Sales Support Age
 -- 5. `unique_invoice_countries.sql`: Provide a query showing a unique/distinct list of billing countries from the Invoice table.
 select distinct BillingCountry from Invoice;
 -- 6. `sales_agent_invoices.sql`: Provide a query that shows the invoices associated with each sales agent. The resultant table should include the Sales Agent's full name.
-select i.InvoiceId, e.FirstName, e.LastName from Invoice i join Customer c, Employee e where i.CustomerId = c.CustomerId and c.SupportRepId = e.EmployeeId;
+select i.InvoiceId, e.FirstName || " " || e.LastName as 'fullname'
+from Invoice i join Customer c join Employee e
+where i.CustomerId = c.CustomerId and c.SupportRepId = e.EmployeeId;
 -- 7. `invoice_totals.sql`: Provide a query that shows the Invoice Total, Customer name, Country and Sale Agent name for all invoices and customers.
 select i.InvoiceId , i.Total, c.FirstName 'Customer First', c.LastName 'Customer Last', e.FirstName 'Employee First', e.LastName 'Employee Last' from Invoice i join Customer c, Employee e where i.CustomerId = c.CustomerId and c.SupportRepId = e.EmployeeId;
 -- 8. `total_invoices_{year}.sql`: How many Invoices were there in 2009 and 2011?
@@ -21,7 +23,9 @@ select sum(case when InvoiceDate like '2009%' then Total else 0 end) as '2009 sa
 -- 10. `invoice_37_line_item_count.sql`: Looking at the InvoiceLine table, provide a query that COUNTs the number of line items for Invoice ID 37.
 select count(InvoiceLineId) as LineItems from InvoiceLine where InvoiceId = 37;
 -- 11. `line_items_per_invoice.sql`: Looking at the InvoiceLine table, provide a query that COUNTs the number of line items for each Invoice. HINT: [GROUP BY](http://www.sqlite.org/lang_select.html#resultset)
-select count(*) as '# of litems' from Invoice i join InvoiceLine l where i.InvoiceId = l.InvoiceId group by i.InvoiceId;
+select count(*) as '# of litems'
+from InvoiceLine
+group by InvoiceId;
 -- 12. `line_item_track.sql`: Provide a query that includes the purchased track name with each invoice line item.
 select t.Name as 'Song Title' from InvoiceLine l join Track t where l.TrackId= t.TrackId group by l.InvoiceLineId;
 -- 13. `line_item_track_artist.sql`: Provide a query that includes the purchased track name AND artist name with each invoice line item.
@@ -77,18 +81,15 @@ group by BillingCountry);
 
 -- 24. `top_2013_track.sql`: Provide a query that shows the most purchased track of 2013.
 
-select Name, num_of_downloads
+select trackname, max(tracksales)
 from
-(select t.Name, count(t.Name) as 'num_of_downloads'
-from Track t join Invoice i join InvoiceLine l
-where i.InvoiceDate like '2013%' and i.InvoiceId = l.InvoiceId and l.TrackId = t.TrackId
-group by t.Name
-order by count(t.Name) desc)
-where num_of_downloads = (select max(num_of_downloads) from (select t.Name, count(t.Name) as 'num_of_downloads'
-from Track t join Invoice i join InvoiceLine l
-where i.InvoiceDate like '2013%' and i.InvoiceId = l.InvoiceId and l.TrackId = t.TrackId
-group by t.Name
-order by count(t.Name) desc) );
+(select t.name as trackname, sum(il.quantity) as tracksales
+from track t
+join InvoiceLine il on t.trackId = il.trackId
+join Invoice i on il.invoiceid = i.invoiceid
+where strftime('%Y', i.invoicedate) = '2013'
+group by t.name
+order by sum(il.quantity) desc)
 
 -- 25. `top_5_tracks.sql`: Provide a query that shows the top 5 most purchased tracks over all.
 
@@ -110,7 +111,7 @@ order by Sales desc limit 3;
 
 
 -- 27. `top_media_type.sql`: Provide a query that shows the most purchased Media Type.
-select Name, max(num_of_sales)
+select Name, max(num_of_sales) as 'Sales'
 from
 (select m.Name, count(t.MediaTypeId) as 'num_of_sales'
 from MediaType m join Track t join InvoiceLine l
